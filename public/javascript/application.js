@@ -3,7 +3,7 @@ $(document).ready(function() {
   // See: http://docs.jquery.com/Tutorials:Introducing_$(document).ready()
   var earthquakes;
   $.ajax({
-    url: 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.geojson',
+    url: 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson',
     dataType: 'JSON'})
   .done(function(object){
     earthquakes = object.features;
@@ -28,11 +28,39 @@ $(document).ready(function() {
       var pointsArr = new Array(N+1);
       for (var n = 0; n < N+1; n++) {
         theta = - 2/N * Math.PI * n;
-        var longtitude = coordinates[0] + (radius * Math.cos(theta)) / Math.cos(coordinates[1] / degrees);
-        var latitude = coordinates[1] + (radius * Math.sin(theta));
+        var longtitude = coordinates[0] + ( Math.cos(theta)) / Math.cos(coordinates[1] / degrees);
+        var latitude = coordinates[1] + ( Math.sin(theta));
         pointsArr[n] = [longtitude, latitude];
       }
       return pointsArr
+    }
+
+    function calcRed(scaled) {
+      if (scaled > Math.PI/2) {
+        return Math.floor(-Math.cos(scaled) * 255);
+      } else {
+        return 0;
+      }
+    }
+
+    function calcGreen(scaled) {
+      return Math.floor(Math.sin(scaled) * 255);
+    }
+
+    function calcBlue(scaled) {
+      if (scaled < (Math.PI*0.5)) {
+        return Math.floor(Math.cos(scaled) * 255);
+      } else {
+        return 0;
+      }
+    }
+
+    function calcColor(mag) {
+      var scaled = Math.PI * (mag)/(8);
+      var red = calcRed(scaled);
+      var green = calcGreen(scaled);
+      var blue = calcBlue(scaled);
+      return "rgb(" + red + "," + green + "," + blue + ")";
     }
 
     earthquakes = earthquakes.filter(function(earthquake) {
@@ -88,7 +116,7 @@ $(document).ready(function() {
           c.clearRect(0, 0, width * ratio, height * ratio);
           c.fillStyle = "#80B280", c.beginPath(), path(land), c.fill();
           for (var i = 0; i < earthquakes.length; i++) {
-            c.fillStyle = "#f00", c.beginPath(), path(earthquakes[i]), c.fill();
+            c.fillStyle = calcColor(earthquakes[i].properties.mag), c.beginPath(), path(earthquakes[i]), c.fill();
           };
           c.strokeStyle = "#000", c.lineWidth = .5 * ratio, c.beginPath(), path(borders), c.stroke();
           c.strokeStyle = "#000", c.lineWidth = .5 * ratio, c.beginPath(), path(globe), c.stroke();
