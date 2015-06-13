@@ -1,6 +1,8 @@
 $(document).ready(function() {
 
   // See: http://docs.jquery.com/Tutorials:Introducing_$(document).ready()
+  var page = $('#pagenum').text('0');
+  var previous = page.text();
   var earthquakes;
   $.ajax({
     url: 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson',
@@ -11,8 +13,8 @@ $(document).ready(function() {
     
     var degrees = 180 / Math.PI,
       ratio = window.devicePixelRatio || 1,
-      width = 960,
-      height = 800,
+      width = 640,
+      height = 480,
       p = ratio;
       N = 15;
 
@@ -66,12 +68,14 @@ $(document).ready(function() {
     earthquakes = earthquakes.filter(function(earthquake) {
       return Math.abs(earthquake.geometry.coordinates[1]) < 60;
     });
+
     _.each(earthquakes, function(earthquake){
       earthquake.origin = earthquake.geometry.coordinates
       earthquake.geometry.coordinates = [makeCircle(earthquake.geometry.coordinates, earthquake.properties.mag * 0.5)];
       // earthquake.geometry.coordinates = [makeCircle(earthquake.geometry.coordinates)];
       earthquake.geometry.type = "Polygon";
     });
+    
     console.log(earthquakes[0]);
 
     var myProjection = d3.geo.orthographic()
@@ -97,7 +101,6 @@ $(document).ready(function() {
 
     d3.json("../world-110m.json", function(error, world) {
 
-
       var globe = {type: "Sphere"},
         graticule = d3.geo.graticule()(),
         land = topojson.feature(world, world.objects.land),
@@ -106,22 +109,25 @@ $(document).ready(function() {
         i = -1,
         i0 = i;
 
-      c.font = "300px Arial"
       var zoom = d3.geo.zoom()
         .projection(myProjection)
         .duration(function(S) { return 2000 * Math.sqrt(S); }) // assume ease="quad-in-out"
         .scaleExtent([height / 2 - 1, Infinity])
         .on("zoom", function() {
           myProjection.clipAngle(Math.asin(Math.min(1, .5 * Math.sqrt(width * width + height * height) / myProjection.scale())) * degrees);
-          c.clearRect(0, 0, width * ratio, height * ratio);
-          c.fillStyle = "#80B280", c.beginPath(), path(land), c.fill();
+          c.fillStyle = "#222222";
+          c.strokeStyle = "#FFF";
+          c.lineWidth = 1;
+          c.fillRect(0, 0, width * ratio, height * ratio);
+          c.strokeRect(0, 0, width * ratio, height * ratio);
+          c.fillStyle = '#375a7f', c.beginPath(), path(land), c.fill();
           for (var i = 0; i < earthquakes.length; i++) {
             c.fillStyle = calcColor(earthquakes[i].properties.mag), c.beginPath(), path(earthquakes[i]), c.fill();
           };
           c.strokeStyle = "#000", c.lineWidth = .5 * ratio, c.beginPath(), path(borders), c.stroke();
-          c.strokeStyle = "#000", c.lineWidth = .5 * ratio, c.beginPath(), path(globe), c.stroke();
+          c.strokeStyle = "#FFF", c.lineWidth = 1 * ratio, c.beginPath(), path(globe), c.stroke();
         })
-        .on("zoomend", transition);
+        .on("zoomend", transitionNext);
 
       console.log(countries[i+1].geometry)
       // console.log(earthquakes[i+1])
@@ -130,12 +136,26 @@ $(document).ready(function() {
         .call(zoom)
         .call(zoom.event);
 
-      function transition() {
-        zoomBounds(myProjection, earthquakes[i = ((i0 = i) + 1) % earthquakes.length]);
+      function transitionTo(i) {
+        zoomBounds(myProjection, earthquakes[i % earthquakes.length]);
         canvas.transition()
             .ease("quad-in-out")
-            .duration(2000) // see https://github.com/mbostock/d3/pull/2045
+            .duration(2000)
             .call(zoom.projection(myProjection).event);
+      }
+
+      function transitionNext() {
+        i0 = i;
+        i++;
+        page.text(i+1);
+        transitionTo(i)
+      }
+
+      function transitionPrevious() {
+        i0 = i;
+        i--;
+        page.text(i+1);
+        transitionTo(i)
       }
 
       function zoomBounds(projection, o) {
@@ -156,8 +176,26 @@ $(document).ready(function() {
             .scale(k)
             .translate([width / 2, height / 2]);
       }
+
+    $('#next').on('click', function() {
+      transitionNext()
     });
 
+    $('#previous').on('click', function() {
+      transitionPrevious()
+    });
+
+    $(page).on('focusout', function() {
+      if (page.text() === '') {
+        page.text(previous);
+      } else {
+        previous = page.text();
+        i = parseInt(page.text()) - 1
+        transitionTo(i);
+      }
+    });
+
+  });
     // Round to integer pixels for speed, and set pixel ratio.
     function roundRatioContext(context) {
       return {
@@ -166,7 +204,6 @@ $(document).ready(function() {
         closePath: function() { context.closePath(); }
       };
     }
+
   });
-
-
 });

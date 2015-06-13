@@ -1,7 +1,25 @@
-<h1>Home Page</h1>
 
-<h1>Animated World Zoom</h1>
-<div>
-<div id="map"></div>
-<div id="control"><label for="north-up"><input type="checkbox" checked id="north-up"> North is up</label></div>
+<%= erb :'_navbar' %>
+<div class='container'>
+  <div class="row text-center">
+    <h1>Interactive 3D Earthquake Map</h1>
+  </div>
+  <div class='row'>
+    <div class='col-md-4'>
+      <div class="row">
+        <div id="control text-left">
+          <label for="north-up">
+          <input type="checkbox" checked id="north-up"> North is up</label>
+        </div>
+      </div>
+      <div class='row text-center'>
+        <button id='previous' class="btn btn-default">Previous</button>
+        <div id='pagenum' contentclass='label label-default' contenteditable='true'></div>
+        <button id='next' class="btn btn-default">Next</button>
+      </div>
+    </div>
+    <div class ='col col-md-8'>
+      <div id="map"></div>
+    </div>
+</div>
 </div>
