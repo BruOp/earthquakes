@@ -5,7 +5,7 @@ $(document).ready(function() {
   var previous = page.text();
   var earthquakes;
   $.ajax({
-    url: 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_month.geojson',
+    url: 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.geojson',
     dataType: 'JSON'})
   .done(function(object){
     earthquakes = object.features;
@@ -129,8 +129,7 @@ $(document).ready(function() {
         })
         .on("zoomend", transitionNext);
 
-      console.log(countries[i+1].geometry)
-      // console.log(earthquakes[i+1])
+      console.log(zoom)
 
       canvas
         .call(zoom)
@@ -193,6 +192,10 @@ $(document).ready(function() {
         i = parseInt(page.text()) - 1
         transitionTo(i);
       }
+    });
+
+    $('#scroller').on('click', function() {
+      d3.geo.zoom()
     });
 
   });
