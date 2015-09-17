@@ -5,7 +5,7 @@ $(document).ready(function() {
   var previous = page.text();
   var earthquakes;
   $.ajax({
-    url: 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.geojson',
+    url: 'http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson',
     dataType: 'JSON'})
   .done(function(object){
     earthquakes = object.features;
@@ -58,7 +58,7 @@ $(document).ready(function() {
     }
 
     function calcColor(mag) {
-      var scaled = Math.PI * (mag)/(8);
+      var scaled = Math.PI * (mag-2)/(5);
       var red = calcRed(scaled);
       var green = calcGreen(scaled);
       var blue = calcBlue(scaled);
@@ -115,21 +115,32 @@ $(document).ready(function() {
         .scaleExtent([height / 2 - 1, Infinity])
         .on("zoom", function() {
           myProjection.clipAngle(Math.asin(Math.min(1, .5 * Math.sqrt(width * width + height * height) / myProjection.scale())) * degrees);
+          //Rectangle around the canvas
           c.fillStyle = "#222222";
           c.strokeStyle = "#FFF";
           c.lineWidth = 1;
           c.fillRect(0, 0, width * ratio, height * ratio);
           c.strokeRect(0, 0, width * ratio, height * ratio);
-          c.fillStyle = '#375a7f', c.beginPath(), path(land), c.fill();
+          // Land forms
+          c.fillStyle = '#375a7f';
+          c.beginPath();
+          path(land);
+          c.fill();
+
+          //Draw earthquake circles
           for (var i = 0; i < earthquakes.length; i++) {
-            c.fillStyle = calcColor(earthquakes[i].properties.mag), c.beginPath(), path(earthquakes[i]), c.fill();
+            c.fillStyle = calcColor(earthquakes[i].properties.mag);
+            c.beginPath();
+            path(earthquakes[i]);
+            c.fill();
           };
+
+          //Draw borders
           c.strokeStyle = "#000", c.lineWidth = .5 * ratio, c.beginPath(), path(borders), c.stroke();
+          //Draw glob outline
           c.strokeStyle = "#FFF", c.lineWidth = 1 * ratio, c.beginPath(), path(globe), c.stroke();
         })
         .on("zoomend", transitionNext);
-
-      console.log(zoom)
 
       canvas
         .call(zoom)
